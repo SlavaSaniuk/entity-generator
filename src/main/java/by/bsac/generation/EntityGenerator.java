@@ -4,17 +4,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
+import java.util.*;
 
 public class EntityGenerator<T> implements Generator<T> {
 
     //Logger
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityGenerator.class);
 
-    //Required entity
-    private T entity;
 
+    private T entity; //Required entity
+
+    private Map<String, Object[]> entity_fields = new HashMap<>();
+
+    //Constructors
     /**
      * Construct new EntityGenerator<T> object.
      * @param t - Needed entity object.
@@ -39,22 +43,63 @@ public class EntityGenerator<T> implements Generator<T> {
 
         //Try to initialize entity instance
         try {
-            LOGGER.debug("Create  new instance of " +getClass().getSimpleName() +"<" +clazz.getSimpleName() +"> entity generator.");
-            this.entity = this.newInstance(clazz);
-        } catch (IllegalAccessException | InstantiationException e) {
-            e.printStackTrace(System.out);
-            LOGGER.error(e.getMessage());
-            throw new IllegalArgumentException(" Cannot instantiate instance. ");
+            LOGGER.debug("Create  new instance of " + getClass().getSimpleName() + "<" + clazz.getSimpleName() + "> entity generator");
+            Constructor<T> constructor = clazz.getDeclaredConstructor();
+            this.entity = constructor.newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            LOGGER.error("Entity class does not have default constructor " +e.getMessage());
+            e.printStackTrace();
+            throw new IllegalArgumentException("Request entity class " +clazz.getSimpleName() +" does not has default constructor");
         }
     }
 
+    //Methods
+    public void withField(String field_name, Object... parameters) {
+        this.entity_fields.put(field_name, parameters);
+    }
+
     public T generate() {
+
+        //Entity fields iterator
+        for (Map.Entry<String, Object[]> m : this.entity_fields.entrySet()) {
+
+            if(m.getValue() == null || m.getValue().length == 0) {
+                LOGGER.debug("For field " +m.getKey() +" parameters are absent.");
+                continue;
+            }
+
+            try {
+
+                //Get requested field
+                Field field = this.entity.getClass().getDeclaredField(m.getKey());
+                field.setAccessible(true); //Set field accessible
+
+                //Generate new random
+                Random r = new Random();
+                int i = r.nextInt(m.getValue().length);
+
+
+                //Set new value to field of this entity
+                field.set(this.entity, m.getValue()[i]);
+                LOGGER.debug("Field " +m.getKey() +": " +m.getValue()[i]);
+
+            } catch (NoSuchFieldException e) {
+                LOGGER.warn("Entity does not have a field with name: " +m.getKey() +"; Skip this field.");
+            } catch (IllegalAccessException e) {
+                LOGGER.warn("Entity field: " +m.getKey() +" is inaccessible or final.");
+            }
+
+        }
+
         return this.entity;
     }
 
-    private T newInstance(Class<T> clazz) throws IllegalAccessException, InstantiationException {
-            return clazz.newInstance();
-    }
+
+
+
+
+
+
 
     /**
      *  Static inner class work as "Builder" design pattern.
@@ -121,6 +166,5 @@ public class EntityGenerator<T> implements Generator<T> {
         }
 
     }
-
 
 }
