@@ -1,5 +1,6 @@
 package by.bsac.generation;
 
+import by.bsac.modifacators.StateModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,15 +9,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
-public class EntityGenerator<T> implements Generator<T> {
+/**
+ * Main class that implements {@link Generator<T>} interface.
+ * @param <T> - Required entity type.
+ */
+public class EntityGenerator<T> implements Generator<T>, StateModifier {
 
     //Logger
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityGenerator.class);
-
-
+    //Class fields
     private T entity; //Required entity
-
-    private Map<String, Object[]> entity_fields = new HashMap<>();
+    private Map<String, PrimitiveField> primitive_fields = new HashMap<>();
 
     //Constructors
     /**
@@ -53,53 +56,75 @@ public class EntityGenerator<T> implements Generator<T> {
         }
     }
 
-    //Methods
-    public void withField(String field_name, Object... parameters) {
-        this.entity_fields.put(field_name, parameters);
-    }
-
+    @Override
     public T generate() {
-
-        //Entity fields iterator
-        for (Map.Entry<String, Object[]> m : this.entity_fields.entrySet()) {
-
-            if(m.getValue() == null || m.getValue().length == 0) {
-                LOGGER.debug("For field " +m.getKey() +" parameters are absent.");
-                continue;
-            }
-
-            try {
-
-                //Get requested field
-                Field field = this.entity.getClass().getDeclaredField(m.getKey());
-                field.setAccessible(true); //Set field accessible
-
-                //Generate new random
-                Random r = new Random();
-                int i = r.nextInt(m.getValue().length);
-
-
-                //Set new value to field of this entity
-                field.set(this.entity, m.getValue()[i]);
-                LOGGER.debug("Field " +m.getKey() +": " +m.getValue()[i]);
-
-            } catch (NoSuchFieldException e) {
-                LOGGER.warn("Entity does not have a field with name: " +m.getKey() +"; Skip this field.");
-            } catch (IllegalAccessException e) {
-                LOGGER.warn("Entity field: " +m.getKey() +" is inaccessible or final.");
-            }
-
-        }
-
+        this.modifyPrimitiveFields();
         return this.entity;
     }
 
+    @Override
+    public final void modifyObjectField(String field_name, Object... args) {
+
+    }
+
+    @Override
+    @SafeVarargs
+    public final  <P> void modifyPrimitiveField(String field_name, Class<P> wrapper_type, P... args) {
+        this.primitive_fields.put(field_name, new PrimitiveField<>(wrapper_type, args));
+    }
 
 
 
+    private void modifyPrimitiveFields() {
 
+        //Iterate map of primitive fields
+        for (Map.Entry<String, PrimitiveField> entry : this.primitive_fields.entrySet()) {
 
+            //Set field to value
+            LOGGER.debug("Try to set " +entry.getKey() +" field to " +this.entity.getClass().getSimpleName() +" entity.");
+            try{
 
+                //Get field from entity class and set it accessible
+                final Field field = this.entity.getClass().getDeclaredField(entry.getKey()); //Get this declared field
+                LOGGER.debug("Set field " +entry.getKey() +" is accessible");
+                field.setAccessible(true); //Set this field accessible
+
+                //Try to set field with new value
+                PrimitiveField primitive_field = entry.getValue();
+                //Check values array on emptiness
+                if (primitive_field.getArguments() == null || primitive_field.getArguments().length == 0) {
+                    LOGGER.debug("Values array for field " +entry.getKey() +" are not specified. Skip this field.");
+                    continue;
+                }
+
+                //Determine primitive type
+                //Integer type
+                if (primitive_field.getWrapperType() == Integer.class) {
+                    LOGGER.debug("Primitive value is [int].");
+
+                    Integer[] values = (Integer[]) primitive_field.getArguments(); //Get and cast values to ints
+                    Integer value = values[new Random().nextInt(values.length)]; //Get random int value
+                    field.set(this.entity, value);
+                }
+
+                //Character type
+                if (primitive_field.getWrapperType() == Character.class) {
+                    LOGGER.debug("Primitive value is [char].");
+
+                    Character[] values = (Character[]) primitive_field.getArguments(); //Get and cast values to characters
+                    Character value = values[new Random().nextInt(values.length)]; //Get random character value
+                    field.set(this.entity, value);
+                }
+
+            } catch (NoSuchFieldException e) {
+                LOGGER.debug("Entity " +this.entity.getClass().getSimpleName() +" doesn't have a field  with name " +entry.getKey() +". Skip this field.");
+
+            } catch (IllegalAccessException e) {
+                LOGGER.debug("Field " +entry.getKey() +" is final or inaccessible. ");
+            }
+
+        }
+    }
 
     /**
      *  Static inner class work as "Builder" design pattern.
@@ -165,6 +190,24 @@ public class EntityGenerator<T> implements Generator<T> {
 
         }
 
+    }
+
+    private static class PrimitiveField<P>{
+
+        private Class<P> wrapper_type;
+        private P[] arguments;
+
+        PrimitiveField(Class<P> a_wrapper_type, P[] a_arguments) {
+            this.wrapper_type = a_wrapper_type;
+            this.arguments = a_arguments;
+        }
+
+        Class<P> getWrapperType() {
+            return this.wrapper_type;
+        }
+        P[] getArguments() {
+            return this.arguments;
+        }
     }
 
 }

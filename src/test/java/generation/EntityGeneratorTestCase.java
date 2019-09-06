@@ -7,9 +7,8 @@ import entitties.User;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.InvocationTargetException;
 
-class EntityGeneratorTestCase extends LoggerSetup {
+class EntityGeneratorTestCase {
 
     @Test
     void entityGenerator_newEntity_shouldReturnThisEntity() {

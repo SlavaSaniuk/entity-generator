@@ -14,11 +14,21 @@ public class User {
 
     private int userAge;
 
+    private char user_sex;
+
     public int getUserAge() {
         return userAge;
     }
 
     public User() {
 
+    }
+
+    public char getUser_sex() {
+        return user_sex;
+    }
+
+    public void setUser_sex(char user_sex) {
+        this.user_sex = user_sex;
     }
 }
