@@ -1,9 +1,9 @@
 package by.bsac.modifacators;
 
-public class FieldsModifierDecorator extends BaseStateModifierDecorator {
+public class FieldsDecorator extends BaseStateModifierDecorator {
 
     //Constructor
-    public FieldsModifierDecorator(StateModifier a_modifier) {
+    public FieldsDecorator(StateModifier a_modifier) {
         super(a_modifier);
     }
 

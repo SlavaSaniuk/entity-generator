@@ -14,8 +14,8 @@ public class BaseStateModifierDecorator implements StateModifier {
         this.modifier.modifyObjectField(field_name, args);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    @SafeVarargs
     public final <P> void modifyPrimitiveField(String field_name, Class<P> wrapper_type, P... args) {
         this.modifier.modifyPrimitiveField(field_name, wrapper_type, args);
     }

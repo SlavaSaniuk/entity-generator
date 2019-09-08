@@ -26,7 +26,7 @@ public class EntityGenerator<T> implements Generator<T>, StateModifier {
      * Construct new EntityGenerator<T> object.
      * @param t - Needed entity object.
      */
-    public EntityGenerator(T t) {
+    private EntityGenerator(T t) {
 
         //Check on null
         if (t == null) throw new NullPointerException("Constructor argument is null");
@@ -67,8 +67,8 @@ public class EntityGenerator<T> implements Generator<T>, StateModifier {
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    @SafeVarargs
     public final  <P> void modifyPrimitiveField(String field_name, Class<P> wrapper_type, P... args) {
         this.primitive_fields.put(field_name, new PrimitiveField<>(wrapper_type, args));
     }
@@ -81,23 +81,33 @@ public class EntityGenerator<T> implements Generator<T>, StateModifier {
         for (Map.Entry<String, PrimitiveField> entry : this.primitive_fields.entrySet()) {
 
             //Set field to value
-            LOGGER.debug("Try to set " +entry.getKey() +" field to " +this.entity.getClass().getSimpleName() +" entity.");
+            LOGGER.debug("Try to set [" +entry.getKey() +"] field to [" +this.entity.getClass().getSimpleName() +"] entity.");
             try{
 
                 //Get field from entity class and set it accessible
                 final Field field = this.entity.getClass().getDeclaredField(entry.getKey()); //Get this declared field
-                LOGGER.debug("Set field " +entry.getKey() +" is accessible");
+                LOGGER.debug("Set field [" +entry.getKey() +"] accessible");
                 field.setAccessible(true); //Set this field accessible
 
                 //Try to set field with new value
                 PrimitiveField primitive_field = entry.getValue();
                 //Check values array on emptiness
                 if (primitive_field.getArguments() == null || primitive_field.getArguments().length == 0) {
-                    LOGGER.debug("Values array for field " +entry.getKey() +" are not specified. Skip this field.");
+                    LOGGER.debug("Values array for field [" +entry.getKey() +"] are not specified. Skip this field.");
                     continue;
                 }
 
                 //Determine primitive type
+                //Byte type
+                if (primitive_field.getWrapperType() == Byte.class) {
+                    LOGGER.debug("Primitive value is [byte].");
+
+                    Byte[] values = (Byte[])  primitive_field.getArguments(); //Get and cast values to byte array
+                    Byte value = values[new Random().nextInt(values.length)]; //Get random byte value
+                    LOGGER.debug("Selected value to field [" +entry.getKey() +"] is \"" +value.toString() +"\"");
+                    field.set(this.entity, value); //Set value
+                }
+
                 //Integer type
                 if (primitive_field.getWrapperType() == Integer.class) {
                     LOGGER.debug("Primitive value is [int].");
