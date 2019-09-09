@@ -1,4 +1,4 @@
-package entitties;
+package entitties.constructors;
 
 public class ArgsConstructorEntity {
 

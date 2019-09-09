@@ -1,7 +1,7 @@
 package generation;
 
 import by.bsac.generation.EntityBuilder;
-import entitties.ArgsConstructorEntity;
+import entitties.constructors.ArgsConstructorEntity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;

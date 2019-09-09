@@ -1,6 +1,5 @@
 package by.bsac.generation;
 
-import by.bsac.modifacators.StateModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,7 +12,7 @@ import java.util.*;
  * Main class that implements {@link Generator<T>} interface.
  * @param <T> - Required entity type.
  */
-public class EntityGenerator<T> implements Generator<T>, StateModifier {
+public class EntityGenerator<T> implements Generator<T> {
 
     //Logger
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityGenerator.class);
@@ -61,14 +60,11 @@ public class EntityGenerator<T> implements Generator<T>, StateModifier {
         this.modifyPrimitiveFields();
         return this.entity;
     }
-
-    @Override
     public final void modifyObjectField(String field_name, Object... args) {
 
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public final  <P> void modifyPrimitiveField(String field_name, Class<P> wrapper_type, P... args) {
         this.primitive_fields.put(field_name, new PrimitiveField<>(wrapper_type, args));
     }

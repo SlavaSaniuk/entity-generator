@@ -1,13 +1,20 @@
 package by.bsac.generation;
 
+import by.bsac.modification.PrimitiveField;
+import by.bsac.modification.PrimitiveTypes;
+import by.bsac.modification.StateModifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
-public class EntityBuilder<T> implements Generator<T> {
+public class EntityBuilder<T> implements Generator<T>, StateModifier {
 
     //Logger
     private static final Logger LOGGER = LoggerFactory.getLogger(EntityBuilder.class);
@@ -15,6 +22,7 @@ public class EntityBuilder<T> implements Generator<T> {
     //Variables
     private Class<T> entity_type; //Required entity class
     private boolean use_builder; //Builder uses flag
+    private final List<PrimitiveField> primitive_fields = new ArrayList<>(); //Entity primitive fields
     // In cases when this builder will create new entities via non-default constructor
     private Class[] constructor_types = null; //Constructor arguments types
     private Object[] constructor_args = null; //Constructor arguments
@@ -66,7 +74,6 @@ public class EntityBuilder<T> implements Generator<T> {
         }
 
     }
-
 
     /**
      * "Builder" pattern. Uses to create {@link EntityBuilder<T>} object if required entity don't have a default(No arguments) constructor.
@@ -169,8 +176,8 @@ public class EntityBuilder<T> implements Generator<T> {
 
     //Methods
     /*
-        Method uses to create new entities for "Generator#generate()" method.
-        Method determine how to create new entities(via default or arguments constructor) and try create new entities.
+     *       Method uses to create new entities for "Generator#generate()" method.
+      * Method determine how to create new entities(via default or arguments constructor) and create new entities.
      */
     private T createEntity() {
         try {
@@ -192,9 +199,104 @@ public class EntityBuilder<T> implements Generator<T> {
         }
     }
 
-    @Override
-    public T generate() {
-        return this.createEntity();
+    private void processPrimitiveFields(T  entity) {
+
+        //Process primitive field
+        for (PrimitiveField field : this.primitive_fields) {
+            LOGGER.debug("Try to process [" +field.getFieldName() +"] primitive field.");
+
+
+            try {
+                //Get field by name
+                Field entity_field = entity.getClass().getDeclaredField(field.getFieldName());
+                LOGGER.debug("Field [" +entity_field.getName() +"] was founded in " +entity.getClass().getName() +" entity class.");
+
+                //Set field accessible
+                entity_field.setAccessible(true);
+                LOGGER.debug("Set field [" +entity_field.getName() +"] accessible.");
+
+                //Get new value from available values
+                Object value = field.getFieldValues()[new Random().nextInt(field.getFieldValues().length)];
+
+                //Try to set new value to field
+                switch (field.getFieldType()) {
+                    case BYTE:
+                        byte b = (Byte) value;
+                        LOGGER.debug("Actual field type [byte] with new value: " +b);
+                        entity_field.setByte(entity, b);
+                        break;
+                    case CHAR:
+                        char c = (Character) value;
+                        LOGGER.debug("Actual field type [char] with new value: " +c);
+                        entity_field.setChar(entity, c);
+                        break;
+                    case SHORT:
+                        short s = (Short) value;
+                        LOGGER.debug("Actual field type [short] with new value: " +s);
+                        entity_field.setShort(entity, s);
+                        break;
+                    case INT:
+                        int i = (Integer) value;
+                        LOGGER.debug("Actual field type [int] with new value: " +i);
+                        entity_field.setInt(entity, i);
+                        break;
+                    case LONG:
+                        long l = (Long) value;
+                        LOGGER.debug("Actual field type [long] with new value: " +l);
+                        entity_field.setLong(entity, l);
+                        break;
+                    case FLOAT:
+                        float f = (Float) value;
+                        LOGGER.debug("Actual field type [float] with new value: " +f);
+                        entity_field.setFloat(entity, f);
+                        break;
+                    case DOUBLE:
+                        double d = (Double) value;
+                        LOGGER.debug("Actual field type [double] with new value: " +d);
+                        entity_field.setDouble(entity, d);
+                        break;
+                    case BOOLEAN:
+                        boolean bo = (Boolean) value;
+                        LOGGER.debug("Actual field type [boolean] with new value: " +bo);
+                        entity_field.setBoolean(entity, bo);
+                        break;
+                }
+            } catch (NoSuchFieldException e) {
+                LOGGER.warn("Field [" +field.getFieldName() +"] not founded in " +entity.getClass().getName() +" entity class.");
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                LOGGER.warn("Field [" +field.getFieldName() +"] is not accessible.");
+                e.printStackTrace();
+            }
+
+
+        }
+
     }
 
+    @Override
+    public T generate() {
+        //Create new entity
+        T created = this.createEntity();
+        this.processPrimitiveFields(created); //Set primitive fields to created entity
+
+        //Return processed entity
+        return created;
+    }
+
+    @SuppressWarnings("unchecked")
+    @SafeVarargs
+    @Override
+    public final <P> void withPrimitiveField(String field_name, Class<P> wrapper_type, P... values) {
+
+        //Skip, if values array is empty
+        if (values == null || values.length == 0) {
+            LOGGER.debug("Available field values array is empty. Skip [" +field_name +"] field.");
+            return;
+        }
+
+        //Add field to list of primitive fields
+        LOGGER.debug("Add primitive field " +field_name +" to processing");
+        this.primitive_fields.add(new PrimitiveField(field_name, PrimitiveTypes.wrapperClassToPrimitiveType(wrapper_type),values));
+    }
 }
