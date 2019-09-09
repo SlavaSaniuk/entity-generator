@@ -1,17 +1,17 @@
 package by.bsac.modification;
 
-import java.text.ParseException;
-
+/**
+ * Enum which determine primitive types of java language. Also has a convert
+ * methods that's convert {@link Class} type object to this constants and vice versa.
+ */
 public enum PrimitiveTypes {
-    BYTE,
-    CHAR,
-    SHORT,
-    INT,
-    LONG,
-    FLOAT,
-    DOUBLE,
-    BOOLEAN;
+    BYTE, CHAR, SHORT, INT, LONG, FLOAT, DOUBLE, BOOLEAN;
 
+    /**
+     * Convert from {@link Class} type to {@link PrimitiveTypes} constant.
+     * @param wrapper_type - Primitive wrapper {@link Class} class.
+     * @return - Constant for specified wrapper type.
+     */
     public static PrimitiveTypes wrapperClassToPrimitiveType(Class<?> wrapper_type) {
         switch (wrapper_type.getSimpleName()) {
             case "Byte":

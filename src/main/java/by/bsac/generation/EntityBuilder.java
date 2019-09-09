@@ -176,8 +176,8 @@ public class EntityBuilder<T> implements Generator<T>, StateModifier {
 
     //Methods
     /*
-     *       Method uses to create new entities for "Generator#generate()" method.
-      * Method determine how to create new entities(via default or arguments constructor) and create new entities.
+     *      Method uses to create new entities for "Generator#generate()" method.
+     * Method determine how to create new entities(via default or arguments constructor) and create new entities.
      */
     private T createEntity() {
         try {
@@ -199,6 +199,11 @@ public class EntityBuilder<T> implements Generator<T>, StateModifier {
         }
     }
 
+    /*
+     *      Method process primitive fields list. In required entity method
+     *  find primitive field by specified field name and try set it new
+     * random value from array of available values.
+     */
     private void processPrimitiveFields(T  entity) {
 
         //Process primitive field
