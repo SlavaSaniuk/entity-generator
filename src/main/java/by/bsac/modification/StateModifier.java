@@ -11,4 +11,6 @@ public interface StateModifier {
      */
     @SuppressWarnings("unchecked")
     <P> void withPrimitiveField(String field_name, Class<P> wrapper_type, P... values);
+
+    void withObjectField(String field_name, Object... values);
 }

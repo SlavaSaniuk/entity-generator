@@ -1,13 +1,15 @@
 package by.bsac.modification;
 
+import by.bsac.generation.EntityBuilder;
+
 public class FieldsDecorator extends BaseStateModifierDecorator {
 
-    public FieldsDecorator(StateModifier a_modifier) {
-        super(a_modifier);
+    public FieldsDecorator(EntityBuilder a_builder) {
+        super(a_builder);
     }
 
     //Methods
-    //Of primitive fields
+    //Of primitives fields
     public void withByteField(String field_name, Byte... values) {
         super.withPrimitiveField(field_name, Byte.class, values);
     }
@@ -31,5 +33,10 @@ public class FieldsDecorator extends BaseStateModifierDecorator {
     }
     public void withBooleanField(String field_name, Boolean... values) {
         super.withPrimitiveField(field_name, Boolean.class, values);
+    }
+
+    //Of objects fields
+    public void withObjectField(String field_name, Object... values) {
+        super.withObjectField(field_name, values);
     }
 }

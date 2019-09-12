@@ -5,6 +5,7 @@ public class TestEntity {
     private byte byte_field;
     private int int_field;
     private char char_field;
+    private String string_field;
 
     //Constructors
     //Default constructor
@@ -20,5 +21,9 @@ public class TestEntity {
 
     public char getCharField() {
         return char_field;
+    }
+
+    public String getStringField() {
+        return string_field;
     }
 }

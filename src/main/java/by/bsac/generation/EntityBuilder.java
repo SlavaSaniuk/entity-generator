@@ -9,10 +9,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class EntityBuilder<T> implements Generator<T>, StateModifier {
 
@@ -23,6 +20,7 @@ public class EntityBuilder<T> implements Generator<T>, StateModifier {
     private Class<T> entity_type; //Required entity class
     private boolean use_builder; //Builder uses flag
     private final List<PrimitiveField> primitive_fields = new ArrayList<>(); //Entity primitive fields
+    private final Map<String, Object[]> objects_fields = new HashMap<>(); //Entity objects fields
     // In cases when this builder will create new entities via non-default constructor
     private Class[] constructor_types = null; //Constructor arguments types
     private Object[] constructor_args = null; //Constructor arguments
@@ -279,11 +277,44 @@ public class EntityBuilder<T> implements Generator<T>, StateModifier {
 
     }
 
+    private void processObjectsFields(T entity) {
+
+        //Iterate fields map
+        for (Map.Entry<String, Object[]> entry : this.objects_fields.entrySet()) {
+
+
+            try {
+                //Get required object field
+                Field field = entity.getClass().getDeclaredField(entry.getKey());
+
+                //Get random value from available values
+                Object[] available_values = entry.getValue();
+                Object value = available_values[new Random().nextInt(available_values.length)];
+                LOGGER.debug("Selected value for field [" +entry.getKey() +"] is '" +value.toString() +"'");
+
+                //Check value and field types
+                if (value.getClass().equals(field.getType())) {
+                    LOGGER.debug("Try to set new value");
+                    field.setAccessible(true);
+                    field.set(entity, value);
+                    LOGGER.debug("Field [" +entry.getKey() +"] with new value '" +value.toString() +"'");
+                }else LOGGER.warn("Incompatibility types: " +field.getType().getName() +" and " +value.getClass().getName());
+
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                LOGGER.warn("Field [" +entry.getKey() +"] not found in class " +entity_type.getName());
+            }
+
+
+        }
+
+    }
+
     @Override
     public T generate() {
         //Create new entity
         T created = this.createEntity();
         this.processPrimitiveFields(created); //Set primitive fields to created entity
+        this.processObjectsFields(created); //Set objects fields to created entity
 
         //Return processed entity
         return created;
@@ -303,5 +334,23 @@ public class EntityBuilder<T> implements Generator<T>, StateModifier {
         //Add field to list of primitive fields
         LOGGER.debug("Add primitive field " +field_name +" to processing");
         this.primitive_fields.add(new PrimitiveField(field_name, PrimitiveTypes.wrapperClassToPrimitiveType(wrapper_type),values));
+    }
+
+    @Override
+    public void withObjectField(String field_name, Object... values) {
+
+        //Check if values array is null or empty
+        if (values == null || values.length == 0) {
+            LOGGER.warn("Available values array is null or empty. Skip this field.");
+            return;
+        }
+
+        if (field_name.isEmpty()) {
+            LOGGER.warn("Field name is empty. Skip this field.");
+            return;
+        }
+
+        //Add to map
+        this.objects_fields.put(field_name, values);
     }
 }
